@@ -45,12 +45,11 @@ $c['logger'] = $c->share(function(Pimple $c){
     return $logger;
 });
 
-//create a router, build the routes, and then execute it
+//create a router
 $c['router'] = $c->share(function(){
     return  new Router();
 });
-$c['router']->connect('/letters', array('controller'=>'letters'));
-$c['router']->connect('/', array('controller'=>'homepage'));
+
 
 function _run_application(Pimple $c)
 {
