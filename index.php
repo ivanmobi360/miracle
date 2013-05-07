@@ -1,4 +1,9 @@
 <?php
+require 'bootstrap.php';
+
+use Symfony\Component\HttpFoundation\Request;
+$request = Request::createFromGlobals();
+
 
 try {
     $dbPath = __DIR__.'/data/database.sqlite';
@@ -7,11 +12,13 @@ try {
     die('Panic! '.$e->getMessage());
 }
 
+$uri = $request->getPathInfo();
+/*
 $uri = $_SERVER['REQUEST_URI'];
 if ($pos = strpos($uri, '?')) {
     $uri = substr($uri, 0, $pos);
 }
-
+*/
 if ($uri == '/' || $uri == '') {
 
     echo '<h1>Welcome to PHP Santa</h1>';
