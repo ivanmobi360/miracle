@@ -79,19 +79,14 @@ function error404(Request $request, Pimple $c)
 }
 
 //create a router, build the routes, and then execute it
-$router = new Router();
-$router->connect('/letters', array('controller'=>'letters'));
-$router->connect('/', array('controller'=>'homepage'));
-$router->parse($c['li3_request']);
-
-$c['request']->attributes->add($c['li3_request']->params);
-$controller = $c['request']->attributes->get('controller', 'error404');
+$c['router'] = $c->share(function(){
+    return  new Router();
+});
+$c['router']->connect('/letters', array('controller'=>'letters'));
+$c['router']->connect('/', array('controller'=>'homepage'));
 
 
-$response = call_user_func_array($controller, array($c['request'], $c));
-if(!$response instanceof Response){
-	throw new Exception(sprintf('Controller "%s" didn\'t return a response', $controller));
-}
+$response = _run_application($c);
 
 $response->send();
 
