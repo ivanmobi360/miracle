@@ -4,7 +4,6 @@ require __DIR__ . '/vendors/Symfony/Component/ClassLoader/UniversalClassLoader.p
 use Symfony\Component\ClassLoader\UniversalClassLoader;
 
 $loader = new UniversalClassLoader();
-$loader->registerNamespace(
-		'Symfony', __DIR__ . '/vendors'
-		);
+$loader->registerNamespace('Symfony', __DIR__ . '/vendors');
+$loader->registerNamespace('lithium', __DIR__ . '/vendors');
 $loader->register();

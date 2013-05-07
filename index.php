@@ -1,43 +1,84 @@
 <?php
 require 'bootstrap.php';
 
+try {
+	$dbPath = __DIR__.'/data/database.sqlite';
+	$dbh = new PDO('sqlite:'.$dbPath);
+} catch(PDOException $e) {
+	die('Panic! '.$e->getMessage());
+}
+
+
+
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use lithium\net\http\Router;
+use lithium\action\Request as Li3Request;
+
+
+
+
+function homepage(Request $request){
+	$content = '<h1>Welcome to PHP Santa</h1>';
+	$content .= '<a href="/letters">Read the letters</a>';
+	if ($name = $request->query->get('name')) {
+		echo sprintf('<p>Oh, and hello %s!</p>', $name);
+	}
+	
+	return new Response($content);
+}
+
+function letters(Request $request)
+{
+
+	global $dbh; //lol
+	
+	$sql = 'SELECT * FROM php_santa_letters';
+	$content =  '<h1>Read the letters to PHP Santa</h1>';
+	$content .=  '<ul>';
+	foreach ($dbh->query($sql) as $row) {
+		$content .=  sprintf('<li>%s - dated %s</li>', $row['content'], $row['received_at']);
+	}
+	$content .=  '</ul>';
+	
+	return new Response($content);
+}
+
+function error404(Request $request)
+{
+	$content =  '<h1>404 Page not Found</h1>';
+	$content .=  '<p>This is most certainly *not* an xmas miracle</p>';
+
+	$response = new Response($content);
+	$response->setStatusCode(404);
+	return $response;
+}
+
+
 $request = Request::createFromGlobals();
+$li3Request = new Li3Request();
 
 
-try {
-    $dbPath = __DIR__.'/data/database.sqlite';
-    $dbh = new PDO('sqlite:'.$dbPath);
-} catch(PDOException $e) {
-    die('Panic! '.$e->getMessage());
+$li3Request->url = $request->getPathInfo();
+
+//create a router, build the routes, and then execute it
+$router = new Router();
+$router->connect('/letters', array('controller'=>'letters'));
+$router->connect('/', array('controller'=>'homepage'));
+$router->parse($li3Request);
+
+
+if (isset($li3Request->params['controller'])){
+	$controller = $li3Request->params['controller'];
+} else{
+	$controller = 'error404';
 }
 
-$uri = $request->getPathInfo();
 
-if ($uri == '/' || $uri == '') {
-
-    echo '<h1>Welcome to PHP Santa</h1>';
-    echo '<a href="/letters">Read the letters</a>';
-    if ($name = $request->query->get('name')) {
-        echo sprintf('<p>Oh, and hello %s!</p>', $name);
-    }
-
-} elseif ($uri == '/letters') {
-
-    $sql = 'SELECT * FROM php_santa_letters';
-    echo '<h1>Read the letters to PHP Santa</h1>';
-    echo '<ul>';
-    foreach ($dbh->query($sql) as $row) {
-        echo sprintf('<li>%s - dated %s</li>', $row['content'], $row['received_at']);
-    }
-    echo '</ul>';
-
-} else {
-    $content =  '<h1>404 Page not Found</h1>';
-    $content .=  '<p>This is most certainly *not* an xmas miracle</p>';
-    
-    $response = new Response($content);
-    $response->setStatusCode(404);
-    $response->send();
+$response = call_user_func_array($controller, array($request));
+if(!$response instanceof Response){
+	throw new Exception(sprintf('Controller "%s" didn\'t return a response', $controller));
 }
+
+$response->send();
+
