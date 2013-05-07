@@ -1,13 +1,6 @@
 <?php
+error_reporting(E_ERROR | E_PARSE);
 require 'bootstrap.php';
-
-try {
-	$dbPath = __DIR__.'/data/database.sqlite';
-	$dbh = new PDO('sqlite:'.$dbPath);
-} catch(PDOException $e) {
-	die('Panic! '.$e->getMessage());
-}
-
 
 
 use Symfony\Component\HttpFoundation\Request;
@@ -16,6 +9,12 @@ use lithium\net\http\Router;
 use lithium\action\Request as Li3Request;
 
 
+$c = new Pimple();
+
+$c['connection'] = $c->share(function(){
+	$dsn = 'sqlite:' . __DIR__ . '/data/database.sqlite';
+	return new PDO($dsn);
+});
 
 
 function homepage(Request $request){
@@ -28,10 +27,10 @@ function homepage(Request $request){
 	return new Response($content);
 }
 
-function letters(Request $request)
+function letters(Request $request, Pimple $c)
 {
 
-	global $dbh; //lol
+	$dbh = $c['connection'] ;
 	
 	$sql = 'SELECT * FROM php_santa_letters';
 	$content =  '<h1>Read the letters to PHP Santa</h1>';
@@ -75,7 +74,7 @@ if (isset($li3Request->params['controller'])){
 }
 
 
-$response = call_user_func_array($controller, array($request));
+$response = call_user_func_array($controller, array($request, $c));
 if(!$response instanceof Response){
 	throw new Exception(sprintf('Controller "%s" didn\'t return a response', $controller));
 }
