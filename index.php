@@ -63,24 +63,17 @@ function error404(Request $request)
 	return $response;
 }
 
-
-$li3Request = $c['li3_request'];
-
 //create a router, build the routes, and then execute it
 $router = new Router();
 $router->connect('/letters', array('controller'=>'letters'));
 $router->connect('/', array('controller'=>'homepage'));
-$router->parse($li3Request);
+$router->parse($c['li3_request']);
+
+$c['request']->attributes->add($c['li3_request']->params);
+$controller = $c['request']->attributes->get('controller', 'error404');
 
 
-if (isset($li3Request->params['controller'])){
-	$controller = $li3Request->params['controller'];
-} else{
-	$controller = 'error404';
-}
-
-
-$response = call_user_func_array($controller, array($c['request'], $c));
+$response = call_user_func_array($controller, array($c['request']	, $c));
 if(!$response instanceof Response){
 	throw new Exception(sprintf('Controller "%s" didn\'t return a response', $controller));
 }
