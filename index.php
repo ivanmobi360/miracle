@@ -2,6 +2,7 @@
 require 'bootstrap.php';
 
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 $request = Request::createFromGlobals();
 
 
@@ -13,18 +14,13 @@ try {
 }
 
 $uri = $request->getPathInfo();
-/*
-$uri = $_SERVER['REQUEST_URI'];
-if ($pos = strpos($uri, '?')) {
-    $uri = substr($uri, 0, $pos);
-}
-*/
+
 if ($uri == '/' || $uri == '') {
 
     echo '<h1>Welcome to PHP Santa</h1>';
     echo '<a href="/letters">Read the letters</a>';
-    if (isset($_GET['name'])) {
-        echo sprintf('<p>Oh, and hello %s!</p>', $_GET['name']);
+    if ($name = $request->query->get('name')) {
+        echo sprintf('<p>Oh, and hello %s!</p>', $name);
     }
 
 } elseif ($uri == '/letters') {
@@ -38,7 +34,10 @@ if ($uri == '/' || $uri == '') {
     echo '</ul>';
 
 } else {
-    header("HTTP/1.1 404 Not Found");
-    echo '<h1>404 Page not Found</h1>';
-    echo '<p>This is most certainly *not* an xmas miracle</p>';
+    $content =  '<h1>404 Page not Found</h1>';
+    $content .=  '<p>This is most certainly *not* an xmas miracle</p>';
+    
+    $response = new Response($content);
+    $response->setStatusCode(404);
+    $response->send();
 }
