@@ -10,10 +10,10 @@ use lithium\action\Request as Li3Request;
 
 
 $c = new Pimple();
+$c['dsn'] = 'sqlite:' . __DIR__ . '/data/database.sqlite'; 
 
-$c['connection'] = $c->share(function(){
-	$dsn = 'sqlite:' . __DIR__ . '/data/database.sqlite';
-	return new PDO($dsn);
+$c['connection'] = $c->share(function(Pimple $c){
+	return new PDO($c['dsn']);
 });
 
 
