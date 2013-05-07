@@ -16,6 +16,16 @@ $c['connection'] = $c->share(function(Pimple $c){
 	return new PDO($c['dsn']);
 });
 
+$c['request'] = $c->share(function(){
+    return Request::createFromGlobals();
+});
+
+$c['li3_request'] = $c->share( function(Pimple $c){
+    $li3Request = new Li3Request();
+    $li3Request->url = $c['request']->getPathInfo();
+    return $li3Request;
+} );
+
 
 function homepage(Request $request){
 	$content = '<h1>Welcome to PHP Santa</h1>';
@@ -54,11 +64,7 @@ function error404(Request $request)
 }
 
 
-$request = Request::createFromGlobals();
-$li3Request = new Li3Request();
-
-
-$li3Request->url = $request->getPathInfo();
+$li3Request = $c['li3_request'];
 
 //create a router, build the routes, and then execute it
 $router = new Router();
@@ -74,7 +80,7 @@ if (isset($li3Request->params['controller'])){
 }
 
 
-$response = call_user_func_array($controller, array($request, $c));
+$response = call_user_func_array($controller, array($c['request'], $c));
 if(!$response instanceof Response){
 	throw new Exception(sprintf('Controller "%s" didn\'t return a response', $controller));
 }
