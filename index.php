@@ -7,6 +7,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use lithium\net\http\Router;
 use lithium\action\Request as Li3Request;
+use Zend\Log\Writer\Stream;
+use Zend\Log\Logger;
 
 
 $c = new Pimple();
@@ -25,6 +27,17 @@ $c['li3_request'] = $c->share( function(Pimple $c){
     $li3Request->url = $c['request']->getPathInfo();
     return $li3Request;
 } );
+
+//create teh logger
+$c['log_path'] = __DIR__ . '/data/web.log';
+$c['logger_writer'] = $c->share(function(Pimple $c){
+    return new Stream($c['log_path']);
+});
+$c['logger'] = $c->share(function(Pimple $c){
+	$logger =  new Logger();
+	$logger->addWriter( $c['logger_writer']);
+    return $logger;
+});
 
 
 function homepage(Request $request){
@@ -53,8 +66,10 @@ function letters(Request $request, Pimple $c)
 	return new Response($content);
 }
 
-function error404(Request $request)
+function error404(Request $request, Pimple $c)
 {
+	$c['logger']->log(Logger::ERR, '404 for '. $request->getPathInfo());
+	
 	$content =  '<h1>404 Page not Found</h1>';
 	$content .=  '<p>This is most certainly *not* an xmas miracle</p>';
 
@@ -73,7 +88,7 @@ $c['request']->attributes->add($c['li3_request']->params);
 $controller = $c['request']->attributes->get('controller', 'error404');
 
 
-$response = call_user_func_array($controller, array($c['request']	, $c));
+$response = call_user_func_array($controller, array($c['request'], $c));
 if(!$response instanceof Response){
 	throw new Exception(sprintf('Controller "%s" didn\'t return a response', $controller));
 }
